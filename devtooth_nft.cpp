@@ -46,7 +46,8 @@ namespace eosio {
         const auto& st = *existing_currency;
 
         // Ensure have issuer authorization and valid quantity
-        require_auth( to );
+        //require_auth( to );
+        require_auth(to);
         eosio_assert( quantity.is_valid(), "invalid quantity" );
         eosio_assert( quantity.amount > 0, "must issue positive quantity of uts" );
         eosio_assert( symbol == st.supply.symbol, "symbol precision mismatch" );
@@ -73,6 +74,7 @@ namespace eosio {
                 token.idx = s_tokens.available_primary_key();
                 token.t_idx = index;
                 token.s_idx = servant_iter.id;
+                token.state = "idle";
 
                 token.owner = to;
                 token.value = asset{1, symbol};
@@ -100,6 +102,7 @@ namespace eosio {
                 token.idx = m_tokens.available_primary_key();
                 token.t_idx = index;
                 token.m_idx = monster_iter.id;
+                token.state = "idle";
 
                 token.owner = to;
                 token.value = asset{1, symbol};
@@ -127,6 +130,7 @@ namespace eosio {
                 token.idx = i_tokens.available_primary_key();
                 token.t_idx = index;
                 token.i_idx = item_iter.id;
+                token.state = "idle";
 
                 token.owner = to;
                 token.value = asset{1, symbol};
@@ -156,6 +160,7 @@ namespace eosio {
             auto sender_token = s_tokens.find( id );
             eosio_assert( sender_token != s_tokens.end(), "token with specified ID does not exist" );
             eosio_assert( sender_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( sender_token->state == "idle", "a non-tradeable token");
 
             const auto& st = *sender_token;
 
@@ -171,6 +176,7 @@ namespace eosio {
             auto sender_token = m_tokens.find( id );
             eosio_assert( sender_token != m_tokens.end(), "token with specified ID does not exist" );
             eosio_assert( sender_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( sender_token->state == "idle", "a non-tradeable token");
 
             const auto& st = *sender_token;
 
@@ -186,6 +192,7 @@ namespace eosio {
             auto sender_token = i_tokens.find( id );
             eosio_assert( sender_token != i_tokens.end(), "token with specified ID does not exist" );
             eosio_assert( sender_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( sender_token->state == "idle", "a non-tradeable token");
 
             const auto& st = *sender_token;
 
@@ -200,6 +207,110 @@ namespace eosio {
 	    // Notify both recipients
         require_recipient( from );
         require_recipient( to );
+    }
+
+    void uts::changestate(account_name from, string sym, id_type id){
+        require_auth(from);
+
+        asset token(0, string_to_symbol(0, sym.c_str()));
+
+        // UTS
+        if( token.symbol == S(0, UTS) ){
+            auto target_token = s_tokens.find( id );
+            eosio_assert( target_token != s_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+
+            const auto& st = *target_token;
+
+            if(st.state == "idle"){
+                s_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "auction";
+                });
+            }
+            else{
+                s_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "idle";
+                });
+            }
+        }
+        // UTM
+        if( token.symbol == S(0, UTM) ){
+            auto target_token = m_tokens.find( id );
+            eosio_assert( target_token != m_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+
+            const auto& st = *target_token;
+
+            if(st.state == "idle"){
+                m_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "auction";
+                });
+            }
+            else{
+                m_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "idle";
+                });
+            }
+        }
+        // UTI
+        if( token.symbol == S(0, UTI) ){
+            auto target_token = i_tokens.find( id );
+            eosio_assert( target_token != i_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+
+            const auto& st = *target_token;
+
+            if(st.state == "idle"){
+                i_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "auction";
+                });
+            }
+            else{
+                i_tokens.modify( st, from, [&]( auto& token ) {
+	            token.state = "idle";
+                });
+            }
+        }
+    }
+
+    void uts::backtogame(account_name from, string sym, id_type id){
+        require_auth(from);
+
+        asset token(0, string_to_symbol(0, sym.c_str()));
+
+        // UTS
+        if( token.symbol == S(0, UTS) ){
+            auto target_token = s_tokens.find( id );
+            eosio_assert( target_token != s_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( target_token->state == "idle", "Can not back to game in auction");
+
+            const auto& st = *target_token;
+
+            s_tokens.erase( st ); 
+        }
+        // UTM
+        if( token.symbol == S(0, UTM) ){
+            auto target_token = m_tokens.find( id );
+            eosio_assert( target_token != m_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( target_token->state == "idle", "Can not back to game in auction");
+
+            const auto& st = *target_token;
+
+            m_tokens.erase( st ); 
+        }
+        // UTI
+        if( token.symbol == S(0, UTI) ){
+            auto target_token = i_tokens.find( id );
+            eosio_assert( target_token != i_tokens.end(), "token with specified ID does not exist" );
+            eosio_assert( target_token->owner == from, "sender does not own token with specified ID");
+            eosio_assert( target_token->state == "idle", "Can not back to game in auction");
+
+            const auto& st = *target_token;
+
+            i_tokens.erase( st ); 
+        }
     }
 
     void uts::clean() {
@@ -274,6 +385,6 @@ namespace eosio {
         });
     }
 
-EOSIO_ABI( uts, (create)(issue)(transferid)(clean) )
+EOSIO_ABI( uts, (create)(issue)(transferid)(changestate)(backtogame)(clean) )
 
 } /// namespace eosio

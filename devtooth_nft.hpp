@@ -22,6 +22,12 @@ namespace eosio {
         void transferid(account_name from, account_name to, id_type id, string sym);
 
         // @abi action
+        void changestate(account_name from, string sym, id_type id);
+
+        // @abi action 
+        void backtogame(account_name from, string sym, id_type id);
+
+        // @abi action
         void clean();
 
         // servant struct
@@ -95,7 +101,8 @@ namespace eosio {
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
                 uint32_t s_idx;       // 서번트 인덱스
-
+                string state;         // 토큰 상태 
+    
                 account_name owner;  // token owner
                 asset value;         // token value (1 UTS)
 
@@ -109,6 +116,7 @@ namespace eosio {
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
                 uint32_t m_idx;       // 몬스터 인덱스
+                string state;         // 토큰 상태 
 
                 account_name owner;  // token owner
                 asset value;         // token value (1 UTM)
@@ -123,6 +131,7 @@ namespace eosio {
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
                 uint32_t i_idx;       // 아이템 인덱스
+                string state;         // 토큰 상태 
 
                 account_name owner;  // token owner
                 asset value;         // token value (1 UTI)
