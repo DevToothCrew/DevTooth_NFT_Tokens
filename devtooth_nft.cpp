@@ -1,10 +1,10 @@
-#include "uts.hpp"
+#include "devtooth_nft.hpp"
 
 namespace eosio {
     using std::string;
     using eosio::asset;
 
-    void uts::create( account_name issuer, string sym ) {
+    void devtooth_nft::create( account_name issuer, string sym ) {
 	    require_auth( _self );
 
 	    // Check if issuer account exists
@@ -29,7 +29,7 @@ namespace eosio {
         });
     }
 
-    void uts::issue(account_name to, asset quantity, uint64_t index)
+    void devtooth_nft::issue(account_name to, asset quantity, uint64_t index)
     {
 	    eosio_assert( is_account( to ), "to account does not exist");
 
@@ -73,10 +73,10 @@ namespace eosio {
             s_tokens.emplace( to, [&]( auto& token ) {
                 token.idx = s_tokens.available_primary_key();
                 token.t_idx = index;
-                token.s_idx = servant_iter.id;
                 token.state = "idle";
 
                 token.owner = to;
+                token.master = to;
                 token.value = asset{1, symbol};
             });
         }
@@ -101,10 +101,10 @@ namespace eosio {
             m_tokens.emplace( to, [&]( auto& token ) {
                 token.idx = m_tokens.available_primary_key();
                 token.t_idx = index;
-                token.m_idx = monster_iter.id;
                 token.state = "idle";
 
                 token.owner = to;
+                token.master = to;
                 token.value = asset{1, symbol};
             });
         }
@@ -129,10 +129,10 @@ namespace eosio {
             i_tokens.emplace( to, [&]( auto& token ) {
                 token.idx = i_tokens.available_primary_key();
                 token.t_idx = index;
-                token.i_idx = item_iter.id;
                 token.state = "idle";
 
                 token.owner = to;
+                token.master = to;
                 token.value = asset{1, symbol};
             });
         }
@@ -144,7 +144,7 @@ namespace eosio {
         add_balance( to, quantity, to );
     }
 
-    void uts::transferid( account_name from, account_name to, id_type id, string sym)
+    void devtooth_nft::transferid( account_name from, account_name to, id_type id, string sym)
     {
         // Ensure authorized to send from account
         eosio_assert( from != to, "cannot transfer to self" );
@@ -209,7 +209,7 @@ namespace eosio {
         require_recipient( to );
     }
 
-    void uts::changestate(account_name from, string sym, id_type id){
+    void devtooth_nft::changestate(account_name from, string sym, id_type id){
         require_auth(from);
 
         asset token(0, string_to_symbol(0, sym.c_str()));
@@ -224,7 +224,7 @@ namespace eosio {
 
             if(st.state == "idle"){
                 s_tokens.modify( st, from, [&]( auto& token ) {
-	            token.state = "auction";
+	            token.state = "selling";
                 });
             }
             else{
@@ -243,7 +243,7 @@ namespace eosio {
 
             if(st.state == "idle"){
                 m_tokens.modify( st, from, [&]( auto& token ) {
-	            token.state = "auction";
+	            token.state = "selling";
                 });
             }
             else{
@@ -262,7 +262,7 @@ namespace eosio {
 
             if(st.state == "idle"){
                 i_tokens.modify( st, from, [&]( auto& token ) {
-	            token.state = "auction";
+	            token.state = "selling";
                 });
             }
             else{
@@ -273,7 +273,7 @@ namespace eosio {
         }
     }
 
-    void uts::backtogame(account_name from, string sym, id_type id){
+    void devtooth_nft::backtogame(account_name from, string sym, id_type id){
         require_auth(from);
 
         asset token(0, string_to_symbol(0, sym.c_str()));
@@ -313,7 +313,7 @@ namespace eosio {
         }
     }
 
-    void uts::clean() {
+    void devtooth_nft::clean() {
         for(auto iter = s_tokens.begin(); iter != s_tokens.end();){
             auto token_iter = s_tokens.find(iter->primary_key());
             iter++;
@@ -333,7 +333,7 @@ namespace eosio {
         }
     }
 
-    void uts::sub_balance( account_name owner, asset value ) 
+    void devtooth_nft::sub_balance( account_name owner, asset value ) 
     {
         account_index from_acnts( _self, owner );
         const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
@@ -349,7 +349,7 @@ namespace eosio {
         }
     }
 
-    void uts::add_balance( account_name owner, asset value, account_name ram_payer )
+    void devtooth_nft::add_balance( account_name owner, asset value, account_name ram_payer )
     {
         account_index to_accounts( _self, owner );
         auto to = to_accounts.find( value.symbol.name() );
@@ -364,7 +364,7 @@ namespace eosio {
         }
     }
 
-    void uts::sub_supply( asset quantity ) {
+    void devtooth_nft::sub_supply( asset quantity ) {
         auto symbol_name = quantity.symbol.name();
         currency_index currency_table( _self, symbol_name );
         auto current_currency = currency_table.find( symbol_name );
@@ -374,7 +374,7 @@ namespace eosio {
         });
     }
 
-    void uts::add_supply( asset quantity )
+    void devtooth_nft::add_supply( asset quantity )
     {
         auto symbol_name = quantity.symbol.name();
         currency_index currency_table( _self, symbol_name );
@@ -385,6 +385,6 @@ namespace eosio {
         });
     }
 
-EOSIO_ABI( uts, (create)(issue)(transferid)(changestate)(backtogame)(clean) )
+EOSIO_ABI( devtooth_nft, (create)(issue)(transferid)(changestate)(backtogame)(clean) )
 
 } /// namespace eosio

@@ -8,9 +8,9 @@ namespace eosio {
     using std::string;
     typedef uint64_t id_type;
 
-    class uts : public contract {
+    class devtooth_nft : public contract {
     public:
-        uts(account_name self) : contract(self), s_tokens(_self, _self), m_tokens(_self, _self), i_tokens(_self, _self) {}
+        devtooth_nft(account_name self) : contract(self), s_tokens(_self, _self), m_tokens(_self, _self), i_tokens(_self, _self) {}
 
         // @abi action
         void create(account_name issuer, string symbol);
@@ -100,10 +100,10 @@ namespace eosio {
             public: 
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
-                uint32_t s_idx;       // 서번트 인덱스
                 string state;         // 토큰 상태 
     
                 account_name owner;  // token owner
+                account_name master; // token master for search detail info
                 asset value;         // token value (1 UTS)
 
                 id_type primary_key() const { return idx; }
@@ -115,10 +115,10 @@ namespace eosio {
             public: 
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
-                uint32_t m_idx;       // 몬스터 인덱스
                 string state;         // 토큰 상태 
 
                 account_name owner;  // token owner
+                account_name master; // token master for search detail info
                 asset value;         // token value (1 UTM)
 
                 id_type primary_key() const { return idx; }
@@ -130,10 +130,10 @@ namespace eosio {
             public: 
                 id_type idx;          // Unique 64 bit identifier,
                 uint32_t t_idx;       // 유저 테이블 상에서의 고유 인덱스
-                uint32_t i_idx;       // 아이템 인덱스
                 string state;         // 토큰 상태 
 
                 account_name owner;  // token owner
+                account_name master; // token master for search detail info
                 asset value;         // token value (1 UTI)
 
                 id_type primary_key() const { return idx; }
